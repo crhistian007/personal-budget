@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Control de Movimientos</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.5.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h1 class="mb-4 text-center"> Control de Presupuesto</h1>
+
+    <div class="row g-3 mb-5">
+      <div class="col-12 col-md-4">
+        <button id="btn-registrar" class="btn btn-primary w-100">
+          Registrar Movimiento
+        </button>
+      </div>
+      <div class="col-12 col-md-4">
+        <button id="btn-resumen" class="btn btn-success w-100">
+          Mostrar Resumen General
+        </button>
+      </div>
+      <div class="col-12 col-md-4">
+        <button id="btn-por-tipo" class="btn btn-info w-100">
+          Mostrar Resumen por Tipo
+        </button>
+      </div>
+    </div>
+
+
+    <div id="output" class="row g-4"></div>
+  </div>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.5.0/dist/js/bootstrap.bundle.min.js"
+  ></script>
+
+  <script>
+    const movimientos = [];
+
+
+    function clearOutput() {
+      document.getElementById('output').innerHTML = '';
+    }
+
+
+    function addCard(title, bodyHtml, colClass = 'col-12 col-md-6 col-lg-4') {
+      const wrapper = document.createElement('div');
+      wrapper.className = colClass;
+      wrapper.innerHTML = `
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">${title}</h5>
+            <div class="card-text">${bodyHtml}</div>
+          </div>
+        </div>`;
+      document.getElementById('output').append(wrapper);
+    }
+
+    function registrarMovimiento() {
+      let seguir = true;
+      while (seguir) {
+        const nombre = prompt("Nombre del gasto/ingreso:");
+        const tipoRaw = prompt("Tipo: ingresa 'Ingreso' o 'Egreso':");
+        const tipo = tipoRaw ? tipoRaw.trim().toLowerCase() : "";
+        const monto = parseFloat(prompt("Monto (número mayor que 0):"));
+
+        if (!nombre || (tipo !== "ingreso" && tipo !== "egreso") || isNaN(monto) || monto <= 0) {
+          alert("Error: datos inválidos. Intenta de nuevo.");
+          continue;
+        }
+
+        const mov = { nombre, tipo, monto };
+        movimientos.push(mov);
+
+        // Mostrar solo este movimiento en una card
+        clearOutput();
+        addCard(
+          `${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`,
+          `<p><strong>Nombre:</strong> ${nombre}</p>
+           <p><strong>Monto:</strong> ${monto}</p>`
+        );
+
+        seguir = confirm("¿Registrar otro movimiento?");
+      }
+    }
+
+
+    function calcularTotalSaldo() {
+      clearOutput();
+      let total = 0;
+      movimientos.forEach(mov => {
+        total += mov.tipo === 'ingreso' ? mov.monto : -mov.monto;
+      });
+      addCard(
+        'Resumen General',
+        `<p><strong>Total movimientos:</strong> ${movimientos.length}</p>
+         <p><strong>Saldo (Ingresos - Egresos):</strong> ${total}</p>`,
+        'col-12 col-md-8'
+      );
+    }
+
+    function mostrarResumen() {
+      clearOutput();
+      const resumenTipos = {};
+      movimientos.forEach(mov => {
+        resumenTipos[mov.tipo] = (resumenTipos[mov.tipo] || 0) + mov.monto;
+      });
+
+
+      for (const tipo in resumenTipos) {
+        addCard(
+          `Total ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`,
+          `<p><strong>Monto:</strong> ${resumenTipos[tipo]}</p>`,
+          'col-12 col-md-6 col-lg-4'
+        );
+      }
+    }
+
+
+    document.getElementById("btn-registrar")
+      .addEventListener("click", registrarMovimiento);
+
+    document.getElementById("btn-resumen")
+      .addEventListener("click", calcularTotalSaldo);
+
+    document.getElementById("btn-por-tipo")
+      .addEventListener("click", mostrarResumen);
+  </script>
+</body>
+</html>
