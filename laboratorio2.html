@@ -35,6 +35,12 @@
 
     <div id="output" class="row g-4"></div>
   </div>
+    <div class="flex flex-wrap gap-2 mt-4">
+    <button id="btn-nombres" class="bg-blue-400 text-white px-4 py-2 rounded">📝 Ver nombres</button>
+    <button id="btn-egresos" class="bg-red-400 text-white px-4 py-2 rounded">💸 Egresos > 100</button>
+    <button id="btn-buscar" class="bg-green-400 text-white px-4 py-2 rounded">🔍 Buscar por nombre</button>
+  </div>
+
 
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.5.0/dist/js/bootstrap.bundle.min.js"
@@ -121,6 +127,54 @@
         );
       }
     }
+
+    document.getElementById("btn-nombres").addEventListener("click", function () {
+    clearOutput();
+    const soloNombres = movimientos.map(function (mov) {
+      return mov.nombre;
+    });
+
+    soloNombres.forEach(function (nombre) {
+        addCard("Nombre de Movimiento", `<p>${nombre}</p>`);
+      });
+
+      console.log("📝 Nombres:", soloNombres);
+    });
+    document.getElementById("btn-egresos").addEventListener("click", function () {
+    clearOutput();
+    const egresosAltos = movimientos.filter(function (mov) {
+      return mov.tipo === "egreso" && mov.monto > 100;
+    });
+
+    egresosAltos.forEach(function (mov) {
+      addCard("💸 Egreso alto", `<p><strong>${mov.nombre}</strong>: S/.${mov.monto}</p>`);
+    });
+
+    console.log("💸 Egresos > 100:", egresosAltos);
+  });
+
+    document.getElementById("btn-buscar").addEventListener("click", function () {
+  clearOutput();
+  let nombreBuscado = prompt("Escribe el nombre del movimiento que quieres buscar");
+
+  const encontrado = movimientos.find(function (mov) {
+    return mov.nombre.toLowerCase() === nombreBuscado.toLowerCase();
+  });
+
+  if (encontrado) {
+    addCard("🔍 Movimiento encontrado", `
+      <p><strong>Nombre:</strong> ${encontrado.nombre}</p>
+      <p><strong>Tipo:</strong> ${encontrado.tipo}</p>
+      <p><strong>Monto:</strong> S/.${encontrado.monto}</p>
+    `);
+  } else {
+    addCard(" No encontrado", `<p>El movimiento "${nombreBuscado}" no existe.</p>`);
+  }
+
+  console.log("🔍 Resultado búsqueda:", encontrado);
+});
+
+
 
 
     document.getElementById("btn-registrar")
