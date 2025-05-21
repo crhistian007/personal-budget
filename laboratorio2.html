@@ -1,190 +1,131 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Control de Movimientos</title>
-
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.5.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  >
+  <meta charset="UTF-8" />
+  <title>Registro de Movimientos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-light">
-  <div class="container py-5">
-    <h1 class="mb-4 text-center"> Control de Presupuesto</h1>
-
-    <div class="row g-3 mb-5">
-      <div class="col-12 col-md-4">
-        <button id="btn-registrar" class="btn btn-primary w-100">
-          Registrar Movimiento
-        </button>
-      </div>
-      <div class="col-12 col-md-4">
-        <button id="btn-resumen" class="btn btn-success w-100">
-          Mostrar Resumen General
-        </button>
-      </div>
-      <div class="col-12 col-md-4">
-        <button id="btn-por-tipo" class="btn btn-info w-100">
-          Mostrar Resumen por Tipo
-        </button>
-      </div>
-    </div>
-
-
-    <div id="output" class="row g-4"></div>
-  </div>
-    <div class="flex flex-wrap gap-2 mt-4">
-    <button id="btn-nombres" class="bg-blue-400 text-white px-4 py-2 rounded">📝 Ver nombres</button>
-    <button id="btn-egresos" class="bg-red-400 text-white px-4 py-2 rounded">💸 Egresos > 100</button>
-    <button id="btn-buscar" class="bg-green-400 text-white px-4 py-2 rounded">🔍 Buscar por nombre</button>
-  </div>
-
-
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.5.0/dist/js/bootstrap.bundle.min.js"
-  ></script>
+<body class="bg-gray-100 p-6 font-sans">
 
   <script>
-    const movimientos = [];
+    class Movimiento {
+      constructor(tipo, monto, descripcion) {
+        this.tipo = tipo;
+        this.monto = monto;
+        this.descripcion = descripcion;
+      }
 
+      render() {
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 shadow-md rounded-md mb-4";
+        card.innerHTML = `
+          <p><strong>Tipo:</strong> ${this.tipo}</p>
+          <p><strong>Monto:</strong> S/.${this.monto}</p>
+          <p><strong>Descripción:</strong> ${this.descripcion}</p>
+        `;
+        document.getElementById("output").appendChild(card);
+      }
 
-    function clearOutput() {
-      document.getElementById('output').innerHTML = '';
-    }
+      static calcularTotalSaldo(lista) {
+        Movimiento.clearOutput();
+        let total = 0;
+        lista.forEach((mov) => {
+          total += mov.tipo === "ingreso" ? mov.monto : -mov.monto;
+        });
+        Movimiento.addCard(
+          "Resumen General",
+          `<p><strong>Total movimientos:</strong> ${lista.length}</p>
+           <p><strong>Saldo (Ingresos - Egresos):</strong> S/.${total}</p>`,
+          'col-12 col-md-8'
+        );
+      }
 
-
-    function addCard(title, bodyHtml, colClass = 'col-12 col-md-6 col-lg-4') {
-      const wrapper = document.createElement('div');
-      wrapper.className = colClass;
-      wrapper.innerHTML = `
-        <div class="card h-100">
-          <div class="card-body">
-            <h5 class="card-title">${title}</h5>
-            <div class="card-text">${bodyHtml}</div>
-          </div>
-        </div>`;
-      document.getElementById('output').append(wrapper);
-    }
-
-    function registrarMovimiento() {
-      let seguir = true;
-      while (seguir) {
-        const nombre = prompt("Nombre del gasto/ingreso:");
-        const tipoRaw = prompt("Tipo: ingresa 'Ingreso' o 'Egreso':");
-        const tipo = tipoRaw ? tipoRaw.trim().toLowerCase() : "";
-        const monto = parseFloat(prompt("Monto (número mayor que 0):"));
-
-        if (!nombre || (tipo !== "ingreso" && tipo !== "egreso") || isNaN(monto) || monto <= 0) {
-          alert("Error: datos inválidos. Intenta de nuevo.");
-          continue;
+      static mostrarResumenPorTipo(lista) {
+        Movimiento.clearOutput();
+        const resumenTipos = {};
+        lista.forEach((mov) => {
+          resumenTipos[mov.tipo] = (resumenTipos[mov.tipo] || 0) + mov.monto;
+        });
+        for (const tipo in resumenTipos) {
+          Movimiento.addCard(
+            `Total ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`,
+            `<p><strong>Monto:</strong> S/.${resumenTipos[tipo]}</p>`,
+            'col-12 col-md-6 col-lg-4'
+          );
         }
+      }
 
-        const mov = { nombre, tipo, monto };
-        movimientos.push(mov);
+      static addCard(title, bodyHtml, colClass = 'col-12 col-md-6 col-lg-4') {
+        const wrapper = document.createElement('div');
+        wrapper.className = colClass;
+        wrapper.innerHTML = `
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">${title}</h5>
+              <div class="card-text">${bodyHtml}</div>
+            </div>
+          </div>
+        `;
+        document.getElementById('output').append(wrapper);
+      }
 
-        // Mostrar solo este movimiento en una card
-        clearOutput();
-        addCard(
-          `${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`,
-          `<p><strong>Nombre:</strong> ${nombre}</p>
-           <p><strong>Monto:</strong> ${monto}</p>`
-        );
+      static clearOutput() {
+        document.getElementById("output").innerHTML = "";
+      }
 
-        seguir = confirm("¿Registrar otro movimiento?");
+      static registrarMovimiento(lista) {
+        let seguir = true;
+
+        while (seguir) {
+          const descripcion = prompt("Nombre del movimiento (descripción)");
+          const tipoRaw = prompt("Tipo de movimiento: ingresa 'Ingreso' o 'Egreso'");
+          const tipo = tipoRaw ? tipoRaw.trim().toLowerCase() : "";
+          const monto = parseFloat(prompt("Monto (número mayor que 0):"));
+
+          if (!descripcion || (tipo !== "ingreso" && tipo !== "egreso") || isNaN(monto) || monto <= 0) {
+            alert("❌ Datos inválidos. Intenta de nuevo.");
+            continue;
+          }
+
+          const nuevo = new Movimiento(tipo, monto, descripcion);
+          lista.push(nuevo);
+
+          Movimiento.clearOutput();
+          nuevo.render();
+
+          seguir = confirm("¿Registrar otro movimiento?");
+        }
       }
     }
 
+    // Esperar a que el DOM esté listo para agregar botones y zona de salida
+    document.addEventListener("DOMContentLoaded", () => {
+      const movimientos = [];
 
-    function calcularTotalSaldo() {
-      clearOutput();
-      let total = 0;
-      movimientos.forEach(mov => {
-        total += mov.tipo === 'ingreso' ? mov.monto : -mov.monto;
-      });
-      addCard(
-        'Resumen General',
-        `<p><strong>Total movimientos:</strong> ${movimientos.length}</p>
-         <p><strong>Saldo (Ingresos - Egresos):</strong> ${total}</p>`,
-        'col-12 col-md-8'
-      );
-    }
+      const btnRegistrar = document.createElement("button");
+      btnRegistrar.textContent = "Registrar Movimiento";
+      btnRegistrar.className = "bg-blue-500 text-white px-4 py-2 rounded mt-4";
+      btnRegistrar.onclick = () => Movimiento.registrarMovimiento(movimientos);
+      document.body.appendChild(btnRegistrar);
 
-    function mostrarResumen() {
-      clearOutput();
-      const resumenTipos = {};
-      movimientos.forEach(mov => {
-        resumenTipos[mov.tipo] = (resumenTipos[mov.tipo] || 0) + mov.monto;
-      });
+      const btnResumen = document.createElement("button");
+      btnResumen.textContent = "Ver Total";
+      btnResumen.className = "bg-green-500 text-white px-4 py-2 rounded mt-4 ml-2";
+      btnResumen.onclick = () => Movimiento.calcularTotalSaldo(movimientos);
+      document.body.appendChild(btnResumen);
 
+      const btnPorTipo = document.createElement("button");
+      btnPorTipo.textContent = "Resumen por Tipo";
+      btnPorTipo.className = "bg-purple-500 text-white px-4 py-2 rounded mt-4 ml-2";
+      btnPorTipo.onclick = () => Movimiento.mostrarResumenPorTipo(movimientos);
+      document.body.appendChild(btnPorTipo);
 
-      for (const tipo in resumenTipos) {
-        addCard(
-          `Total ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`,
-          `<p><strong>Monto:</strong> ${resumenTipos[tipo]}</p>`,
-          'col-12 col-md-6 col-lg-4'
-        );
-      }
-    }
-
-    document.getElementById("btn-nombres").addEventListener("click", function () {
-    clearOutput();
-    const soloNombres = movimientos.map(function (mov) {
-      return mov.nombre;
+      const output = document.createElement("div");
+      output.id = "output";
+      output.className = "mt-6 row";
+      document.body.appendChild(output);
     });
-
-    soloNombres.forEach(function (nombre) {
-        addCard("Nombre de Movimiento", `<p>${nombre}</p>`);
-      });
-
-      console.log("📝 Nombres:", soloNombres);
-    });
-    document.getElementById("btn-egresos").addEventListener("click", function () {
-    clearOutput();
-    const egresosAltos = movimientos.filter(function (mov) {
-      return mov.tipo === "egreso" && mov.monto > 100;
-    });
-
-    egresosAltos.forEach(function (mov) {
-      addCard("💸 Egreso alto", `<p><strong>${mov.nombre}</strong>: S/.${mov.monto}</p>`);
-    });
-
-    console.log("💸 Egresos > 100:", egresosAltos);
-  });
-
-    document.getElementById("btn-buscar").addEventListener("click", function () {
-  clearOutput();
-  let nombreBuscado = prompt("Escribe el nombre del movimiento que quieres buscar");
-
-  const encontrado = movimientos.find(function (mov) {
-    return mov.nombre.toLowerCase() === nombreBuscado.toLowerCase();
-  });
-
-  if (encontrado) {
-    addCard("🔍 Movimiento encontrado", `
-      <p><strong>Nombre:</strong> ${encontrado.nombre}</p>
-      <p><strong>Tipo:</strong> ${encontrado.tipo}</p>
-      <p><strong>Monto:</strong> S/.${encontrado.monto}</p>
-    `);
-  } else {
-    addCard(" No encontrado", `<p>El movimiento "${nombreBuscado}" no existe.</p>`);
-  }
-
-  console.log("🔍 Resultado búsqueda:", encontrado);
-});
-
-
-
-
-    document.getElementById("btn-registrar")
-      .addEventListener("click", registrarMovimiento);
-
-    document.getElementById("btn-resumen")
-      .addEventListener("click", calcularTotalSaldo);
-
-    document.getElementById("btn-por-tipo")
-      .addEventListener("click", mostrarResumen);
   </script>
+
 </body>
 </html>
